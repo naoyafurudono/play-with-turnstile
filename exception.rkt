@@ -1,8 +1,5 @@
 #lang turnstile/quicklang
 
-;; λ項 + 足し算 + 例外
-;; 今できること : with-handlers以外
-;; 例えばeffectを集めることはできている. with-handlerの型検査やeffectを取り除くことができていない
 (provide (all-defined-out))
 
 (define-base-types Int Bool)
@@ -38,8 +35,6 @@
 
 ;;;;;;;;;;;;;;;;;;;; exception ;;;;;;;;;;;;;;;;;;;;
 
-;; (raise e) = (raise- e-)
-;; effectはeのeffect + e (e- ではない。handlerに渡すので)
 (define-typed-syntax (raise e) ≫
   [⊢ e ≫ e-
      (⇒ τ)
@@ -50,34 +45,43 @@
      (⇒  τ)
      (⇒ exn (e er ...))])
 
-;; この式のeffect = p, handlerのeffect, (eのeffect - pを満たすもの)
-;; effectを取り除く方法に苦戦してる。マクロの知識?
-;; とりあえずhandlerは一つ. (最終的には任意個にする)
 (define-typed-syntax (with-handlers ([p handler]) e) ≫
-  [⊢ p ≫ p-
-     (⇒ : (~→ τ-p-in τ-p-out)
-        (⇒ exn (~locs p-exn ...)))]
-  ;; TODO check τ-p-out = Bool
-  ;; #:fail-unless (type=? #'τ-p-out #'Bool) (print "error")  ;; NOT work well
-  [⊢ handler ≫ handler-
-     (⇒ (~→ τ-h-in τ-h-out))
-     (⇒ exn (~locs handler-exn ...))]
-  ;; TODO check τ-p-in = τ-h-in
   [⊢ e ≫ e-
-      (⇒ : τ-e)
-     (⇒ exn (~locs e-exn ...))]
-  ;; TODO check τ-h-in = τ-e
-  ;; #:with uncaught-exn (remove #t (syntax->list #'(e-exn ...)) p)  ;; TODO handleするeffectを取り除く
-  #:fail-unless #f (print #'(p-exn ... handler-exn ... e-exn ...))  ;; 全てのeffectをprint
-    --------------------
-  [⊢ (with-handlers- ([p- handler-] e-))
      (⇒ : τ-e)
-     (⇒ exn (p-exn ...  handler-exn ...
-                   ;; uncaught-exn ...
-                   ))])
+     (⇒ exn (~locs e-exn ...))]
+  [⊢ p ≫ p-
+     (⇐ : (→ τ-e Bool)  ;; 3rd suggestion
+        ;; (⇒ (~→ τ-p-in ~Bool) ;; 2nd suggestion
+        (⇒ exn (~locs p-exn ...)))]
+  ;; [τ-p-in τ= τ-e #:for p]  ;; 2nd suggestion
+  [⊢ handler ≫ handler-
+     (⇒ : τ-handler
+        (⇒ exn (~locs handler-exn ...)))]
+  #:with τ-handler-expected ((current-type-eval) #'(→ τ-e τ-e))
+  [τ-handler τ= τ-handler-expected #:for handler]
+  ;; #:with uncaught-exn (remove (syntax->list #'(e-exn ...)) p)
+  --------------------
+  [⊢ (with-handlers- ([p- handler-]) e-)
+     (⇒ : τ-e)
+     (⇒ exn (e-exn ... p-exn ... handler-exn ...))])
 
-
-;;;;;;;;;;;;;;;;;;;;;;; STLC ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We assume exception is represented as Int value, and modify the input type of the predicate to Int.
+;; (define-typed-syntax (with-handlers ([p handler]) e) ≫
+;;   [⊢ e ≫ e-
+;;      (⇒ : τ-e
+;;         (⇒ exn (~locs e-exn ...)))]
+;;   [⊢ p ≫ p-
+;;      (⇒ : (~→ ~Int ~Bool)
+;;         (⇒ exn (~locs p-exn ...)))]
+;;   [⊢ handler ≫ handler-
+;;      (⇒ : (~→ ~Int τ-handler-out)
+;;         (⇒ exn (~locs handler-exn ...)))]
+;;   [τ-handler-out τ= τ-e]
+;;   --------------------
+;;   [⊢ (with-handlers- ([p- handler-]) e-)
+;;      (⇒ : τ-e)
+;;      (⇒ exn (e-exn ... p-exn ... handler-exn ...))])
+;; ;;;;;;;;;;;;;;;;;;;;;;; STLC ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (define-typed-syntax (λ ([x:id (~datum :) τ:type] ...) e) ≫
@@ -85,12 +89,11 @@
                 (⇒ : τ-out)
                 (⇒ exn (~locs body-exn ...))
                 ]
-  ;; #:fail-unless #f (print #'(body-exn ...))
   ------------
   [⊢ (λ- (x- ...) e-)
      (⇒ : (→ τ ... τ-out)
         (⇒ exn (body-exn ...))
-        )])  ;; この式にはeffectはつかない
+        )])
 
 (define-typed-syntax (#%app e-fn e-arg ...) ≫
   [⊢ e-fn ≫ e-fn-
