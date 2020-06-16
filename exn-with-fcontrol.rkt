@@ -1,7 +1,7 @@
 #lang turnstile/quicklang
 (require racket/control)
 
-(provide (all-defined-out))
+(provide (all-defined-out) quote)
 
 (define-base-types Int Bool)
 (define-type-constructor → #:arity > 1)
@@ -59,33 +59,6 @@
   [⊢ (% e- (λ- (x- k-) (#%app- handler- x-)))
      (⇒ : τ-e)
      (⇒ exn uncaught-exn)])
-
-;; denote the type of this expression by programmer
-;; (define-typed-syntax (raise (~datum :) τ e) ≫
-;;   [⊢ e ≫ e-
-;;      (⇐ Int)
-;;      (⇒ exn (~locs er ...))
-;;      ]
-;;   ------------
-;;   [⊢ (#%app- raise- e- )
-;;      (⇒  τ)
-;;      (⇒ exn (e er ...))])
-
-;; (define-typed-syntax (with-handlers ([p handler]) e) ≫
-;;   [⊢ e ≫ e-
-;;      (⇒ : τ-e)
-;;      (⇒ exn (~locs e-exn ...))]
-;;   [⊢ p ≫ p-
-;;      (⇐ : (→ Int Bool))
-;;      (⇒ : _ (⇒ exn (~locs p-exn ...)))]
-;;   [⊢ handler ≫ handler-
-;;      (⇐ : (→ Int τ-e))
-;;      (⇒ : _ (⇒ exn (~locs handler-exn ...)))]
-;;   #:with uncaught-exn (filter (eval #'p) (eval #'(e-exn ...)))
-;;   --------------------
-;;   [⊢ (with-handlers- ([p- handler-]) e-)
-;;      (⇒ : τ-e)
-;;      (⇒ exn uncaught-exn)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-typed-syntax (if exp1 exp2 exp3) ≫
