@@ -1,4 +1,5 @@
 #lang turnstile/quicklang
+(require racket/control)
 
 (provide (all-defined-out))
 
@@ -42,7 +43,7 @@
   ------------
   [⊢ (#%app- fcontrol s)
      (⇒  τ)
-     (⇒ exn (s))])
+     (⇒ exn (list #'s))])
 
 (define-typed-syntax (try-handle e s handler) ≫
   [⊢ e ≫ e-
@@ -52,7 +53,8 @@
      (⇒ (~→ τ-h-in τ-h-out)
         (⇒ exn (~locs handler-ty-exn ...)))
      (⇒ exn (~locs handler-exn ...))]
-  #:with uncaught-exn (remove* (list #'s) #'(e-exn ... handler-ty-exn ... handler-exn ...))
+  #:with uncaught-exn
+  (remove #'s (syntax->list #'(e-exn ... handler-ty-exn ... handler-exn ...)))
   --------------------
   [⊢ (% e- (λ- (x- k-) (#%app- handler- x-)))
      (⇒ : τ-e)
@@ -157,3 +159,7 @@
      (⇒ exn (ex1 ... ex2 ...))]
   )
 
+(try-handle
+ (raise : Int 'exn)
+ 'exn
+ (λ ([x : Int]) 12))
