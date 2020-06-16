@@ -35,9 +35,12 @@
 
 ;;;;;;;;;;;;;;;;;;;; exception ;;;;;;;;;;;;;;;;;;;;
 
-(define-typed-syntax (raise e) ≫
+;; We assume exception is represented as Int value.
+
+;; denote the type of this expression by programmer
+(define-typed-syntax (raise (~datum :) τ e) ≫
   [⊢ e ≫ e-
-     (⇒ τ)
+     (⇐ Int)
      (⇒ exn (~locs er ...))
      ]
   ------------
@@ -50,23 +53,27 @@
      (⇒ : τ-e)
      (⇒ exn (~locs e-exn ...))]
   [⊢ p ≫ p-
-     (⇐ : (→ τ-e Bool)  ;; 3rd suggestion
-        ;; (⇒ (~→ τ-p-in ~Bool) ;; 2nd suggestion
-        (⇒ exn (~locs p-exn ...)))]
-  ;; [τ-p-in τ= τ-e #:for p]  ;; 2nd suggestion
+     (⇐ : (→ Int Bool))
+     (⇒ : _ (⇒ exn (~locs p-exn ...)))]
   [⊢ handler ≫ handler-
-     (⇒ : τ-handler
-        (⇒ exn (~locs handler-exn ...)))]
-  #:with τ-handler-expected ((current-type-eval) #'(→ τ-e τ-e))
-  [τ-handler τ= τ-handler-expected #:for handler]
-  ;; #:with uncaught-exn (remove (syntax->list #'(e-exn ...)) p)
+     (⇐ : (→ Int τ-e))
+     (⇒ : _ (⇒ exn (~locs handler-exn ...)))]
+  #:with uncaught-exn (filter (eval #'p) (eval #'(e-exn ...)))
   --------------------
   [⊢ (with-handlers- ([p- handler-]) e-)
      (⇒ : τ-e)
-     (⇒ exn (e-exn ... p-exn ... handler-exn ...))])
+     (⇒ exn uncaught-exn)])
 
-;; We assume exception is represented as Int value, and modify the input type of the predicate to Int.
-;; (define-typed-syntax (with-handlers ([p handler]) e) ≫
+;; (begin-for-syntax
+;;   (define remove-e
+;;     (lambda (exn-list)
+;;       (if (null? exn-list)
+;;           '()
+;;           ((if (eval #'(p (car exn-list)))
+;;               (lambda (x) x)
+;;               (cons (car exn-list)))
+;;            (e (cdr exn-list) p))))))
+;; ;; (define-typed-syntax (with-handlers ([p handler]) e) ≫
 ;;   [⊢ e ≫ e-
 ;;      (⇒ : τ-e
 ;;         (⇒ exn (~locs e-exn ...)))]
