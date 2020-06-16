@@ -1,4 +1,4 @@
-#lang s-exp "exception-with-fcontrol.rkt"
+#lang s-exp "exn-with-fcontrol.rkt"
 (require rackunit/turnstile)
 
 ;; single exception
