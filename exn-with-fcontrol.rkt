@@ -52,7 +52,8 @@
      (⇐ : τ-e)
      (⇒ exn (~locs handler-exn ...))]
   #:with uncaught-exn
-  (remove-s* #'s  (syntax->list #'(e-exn ...  handler-exn ...)));; same-exn?)
+  (append (remove-s* #'s  (syntax->list #'(e-exn ...)))
+          (syntax->list #'(handler-exn ...)))
   --------------------
   [⊢ (% e- (λ- (x- k-) (if- (#%app- eqv?- s x-)
                             handler-

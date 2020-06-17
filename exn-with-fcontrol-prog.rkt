@@ -75,4 +75,4 @@
   0
   'exn
   (raise : Int 'exn))
- #:tag exn)  ;; expect ('exn), actual: ()
+ #:tag exn)  ;; expect ('exn), actual: ('exn)
