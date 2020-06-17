@@ -61,3 +61,18 @@
 ;;   'exn 11)
 ;;  #:tag exn)
 
+(print-type
+ (try-handle
+  (+
+   (raise : Int 'exn)
+   (raise : Int 'exn))
+  'exn
+  0)
+ #:tag exn)  ;; expect: (), actual: ('exn)
+
+(print-type
+ (try-handle
+  0
+  'exn
+  (raise : Int 'exn))
+ #:tag exn)  ;; expect ('exn), actual: ()
