@@ -50,13 +50,14 @@
      (⇒ : τ-e)
      (⇒ exn (~locs e-exn ...))]
   [⊢ handler ≫ handler-
-     (⇒ (~→ τ-h-in τ-h-out)
-        (⇒ exn (~locs handler-ty-exn ...)))
+     (⇐ : τ-e)
      (⇒ exn (~locs handler-exn ...))]
   #:with uncaught-exn
-  (remove #'s (syntax->list #'(e-exn ... handler-ty-exn ... handler-exn ...)))
+  (remove #'s (syntax->list #'(e-exn ...  handler-exn ...)))
   --------------------
-  [⊢ (% e- (λ- (x- k-) (#%app- handler- x-)))
+  [⊢ (% e- (λ- (x- k-) (if- (#%app- eqv?- s x-)
+                            handler-
+                            (raise : τ-e x-))))
      (⇒ : τ-e)
      (⇒ exn uncaught-exn)])
 
@@ -132,7 +133,7 @@
      (⇒ exn (ex1 ... ex2 ...))]
   )
 
-(try-handle
- (raise : Int 'exn)
- 'exn
- (λ ([x : Int]) 12))
+;; (try-handle
+;;  (raise : Int 'exn)
+;;  'exn
+;;  (λ ([x : Int]) 12))
