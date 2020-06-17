@@ -23,7 +23,7 @@
 (begin-for-syntax
   (define-syntax ~locs
     (pattern-expander
-     (syntax-parser
+     (syntax-parser  ;; syntax-parserはsyntax-parseと違って、stxを引数に取らない。ということで、procを返す。ここでは(_ loc:id ...) -> #'(~and tmp .....)
        [(_ loc:id ...)
         #:with tmp (generate-temporary 'locs)
         #'(~and tmp
@@ -38,12 +38,11 @@
 
 ;;;;;;;;;;;;;;;;;;;; exception ;;;;;;;;;;;;;;;;;;;;
 
-;; 
 (define-typed-syntax (raise (~datum :) τ s) ≫
   ------------
   [⊢ (#%app- fcontrol s)
      (⇒  τ)
-     (⇒ exn (list #'s))])
+     (⇒ exn (s))])
 
 (define-typed-syntax (try-handle e s handler) ≫
   [⊢ e ≫ e-
@@ -53,13 +52,19 @@
      (⇐ : τ-e)
      (⇒ exn (~locs handler-exn ...))]
   #:with uncaught-exn
-  (remove #'s (syntax->list #'(e-exn ...  handler-exn ...)))
+  (remove #'s  (syntax->list #'(e-exn ...  handler-exn ...)) same-exn?)
   --------------------
   [⊢ (% e- (λ- (x- k-) (if- (#%app- eqv?- s x-)
                             handler-
                             (raise : τ-e x-))))
      (⇒ : τ-e)
      (⇒ exn uncaught-exn)])
+
+  (begin-for-syntax
+    (define (quoted-e a)
+      (syntax-e (cadr (syntax-e a))))
+    (define (same-exn? a b)
+      (eqv? (quoted-e a) (quoted-e b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-typed-syntax (if exp1 exp2 exp3) ≫
@@ -133,7 +138,7 @@
      (⇒ exn (ex1 ... ex2 ...))]
   )
 
-;; (try-handle
-;;  (raise : Int 'exn)
-;;  'exn
-;;  (λ ([x : Int]) 12))
+(try-handle
+ (raise : Int 'exn)
+ 'exn
+ 12)
