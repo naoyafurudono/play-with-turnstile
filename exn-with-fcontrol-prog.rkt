@@ -68,7 +68,7 @@
    (raise : Int 'exn))
   'exn
   0)
- #:tag exn)  ;; expect: (), actual: ('exn)
+ #:tag exn)  ;; expect: (), actual: ()
 
 (print-type
  (try-handle

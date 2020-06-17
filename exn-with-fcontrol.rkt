@@ -52,7 +52,7 @@
      (⇐ : τ-e)
      (⇒ exn (~locs handler-exn ...))]
   #:with uncaught-exn
-  (remove #'s  (syntax->list #'(e-exn ...  handler-exn ...)) same-exn?)
+  (remove-s* #'s  (syntax->list #'(e-exn ...  handler-exn ...)));; same-exn?)
   --------------------
   [⊢ (% e- (λ- (x- k-) (if- (#%app- eqv?- s x-)
                             handler-
@@ -61,6 +61,13 @@
      (⇒ exn uncaught-exn)])
 
   (begin-for-syntax
+    (define (remove-s* s lst)
+      (if (null? lst)
+          '()
+          (let ([head (car lst)])
+            (if (same-exn? head s)
+                (remove-s* s (cdr lst))
+                (cons head (remove-s* s (cdr lst)))))))
     (define (quoted-e a)
       (syntax-e (cadr (syntax-e a))))
     (define (same-exn? a b)
