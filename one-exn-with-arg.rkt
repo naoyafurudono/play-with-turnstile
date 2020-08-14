@@ -92,26 +92,29 @@
 
 ;;;;;;;;;;; Exceptions ;;;;;;;;;;;
 
-(define-typed-syntax (error (~datum :) τ) ≫
+(define-typed-syntax (raise e (~datum :) τ:type) ≫
+  [⊢ e ≫ e-
+     (⇐ : Int)
+     (⇐ exn #f)]
   ------------
-  [⊢ (#%app- fcontrol 0)
+  [⊢ (#%app- fcontrol e-)
      (⇒ τ)
      (⇒ exn #t)])
 
-(define-typed-syntax (try-handle e1 e2) ≫
+(define-typed-syntax (try-handle e1 x:id e2) ≫
   [⊢ e1 ≫ e1-
-     (⇒ : τ1)
+     (⇒ : τ)
      (⇒ exn exn1)]
-  [⊢ e2 ≫ e2-
-     (⇐ : τ1)
+  [[x ≫ x- : Int] ⊢ e2 ≫ e2-
+     (⇐ : τ)
      (⇒ exn exn2)]
   --------------------
   [⊢ (% e1- (λ- (x- k-) e2-))
-     (⇒ : τ1)
+     (⇒ : τ)
      (⇒ exn exn2)])
 
 ;;;;;;;;;;; Examples ;;;;;;;;;;;
 
-; (try-handle (+ 12 30) 0)
+; (try-handle (+ 12 30) x 0)
 
-; (try-handle (+ 12 (error : Int)) 0)
+; (try-handle (+ 12 (raise 30 : Int)) x (+ x 8))
