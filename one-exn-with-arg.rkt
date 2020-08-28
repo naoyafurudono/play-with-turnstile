@@ -1,5 +1,6 @@
 #lang turnstile/quicklang
 (require racket/control)
+(require rackunit/turnstile)
 
 (provide (all-defined-out) quote)
 
@@ -14,7 +15,7 @@
     (cond [(stx-truth? a) a]
           [else b])))
 
-;;;;;;;;;;; STLC ;;;;;;;;;;;
+;;;;;;;;;;; Lambda Terms ;;;;;;;;;;;
 
 (define-typed-syntax (λ ([x:id (~datum :) τ:type] ...) e) ≫
   [[x ≫ x- : τ] ... ⊢ e ≫ e-
@@ -118,3 +119,7 @@
 ; (try-handle (+ 12 30) x 0)
 
 ; (try-handle (+ 12 (raise 30 : Int)) x (+ x 8))
+
+; (print-type (raise 30 : Int))
+
+; (print-type (raise 30 : Int) #:tag exn)
